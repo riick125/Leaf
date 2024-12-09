@@ -1,0 +1,209 @@
+﻿@page
+@{
+    Layout = "_Layout";
+}
+
+@section Scripts {
+    <script>
+        var inicializando = true;
+
+        $(document).ready(function() {
+            $('#grupo-usuarios').hide();
+
+            $('#formulario').validate({
+                rules: {
+                    usuario: {
+                        required: true
+                    },
+                    nome: {
+                        required: true
+                    },
+                    descricao: {
+                        required: true
+                    },
+                    dataLocal: {
+                        required: true,
+                        date: true
+                    }
+                    },
+                messages: {
+                    usuario: {
+                        required: "O campo usuário é obrigatório."
+                    },
+                    nome: {
+                        required: "O campo nome é obrigatório."
+                    },
+                    descricao: {
+                        required: "O campo descrição é obrigatório."
+                    },
+                    dataLocal: {
+                        required: "A data é obrigatória.",
+                        date: "Por favor, insira uma data válida."
+                    }
+                }
+            });
+
+            $('#exclusivo').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#usuarios-compartilhados').prop('disabled', true);
+                    $('#grupo-usuarios').hide();
+                }
+            });
+
+            $('#compartilhado').change(function() {
+                if ($(this).is(':checked')) {
+                    $('#usuarios-compartilhados').prop('disabled', false);
+                    $('#grupo-usuarios').show();
+                }
+            });
+
+            $('#formulario').on('submit', function(event) {
+                if ($(this).valid()) {
+                    event.preventDefault();
+
+                    var usuarioId = parseInt($('#usuario').val());
+                    var nome = $('#nome').val();
+                    var descricao = $('#descricao').val();
+                    var dataUtc = new Date($('#dateTimePicker').val());
+                    var dataLocal = new Date(dataUtc.getTime() - dataUtc.getTimezoneOffset() * 60000);
+
+                    var exclusivo = $('input[id="exclusivo"]:checked').val();
+
+                    var tipo = exclusivo ? 1 : 2;
+
+                    var usuariosId = $('#usuarios-compartilhados').find(":selected").map(function() {
+                        return parseInt($(this).val());
+                    }).get();
+
+                    var evento = JSON.stringify({
+                        usuarioId: usuarioId,
+                        nome: nome,
+                        descricao: descricao,
+                        dataLocal: dataLocal,
+                        tipo: tipo,
+                        usuariosId: usuariosId
+                    });
+
+                    $.ajax({
+                        url: '/Evento/IncluirEvento',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: evento,
+                        success: function (response) {
+                            alert('Evento criado com sucesso!');
+                            location.reload();
+                        },
+                        error: function (xhr, status, error) {
+                            debugger;
+                            alert(xhr.responseText);
+                        }
+                    });
+                }
+            });
+
+            buscarTodosUsuarios();
+
+            $('#usuario').on('change', function(event){
+                event.preventDefault();
+
+                buscarTodosUsuarios();
+            });
+        });
+
+        function buscarTodosUsuarios(){
+            $.ajax({
+                url: '/Evento/BuscarTodosUsuarios',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response && response.length > 0) {
+                        $('#usuarios-compartilhados').empty();
+
+                        response.forEach(function(usuario) {
+                            if (inicializando) {
+                                $('#usuario').append(
+                                    `<option value="${usuario.id}">${usuario.nome}</option>`
+                                );
+                            }
+
+                            var usuarioSelecionado = $('#usuario').val();
+
+                            if (!usuarioSelecionado || usuarioSelecionado != usuario.id) {
+                                $('#usuarios-compartilhados').append(
+                                    `<option value="${usuario.id}">${usuario.nome}</option>`
+                                );
+                            }
+                        });
+
+                        inicializando = false;
+                    } else {
+                        console.log('Nenhum usuário encontrado.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro ao buscar usuários: ' + error);
+                }
+            });
+        }
+    </script>
+}
+
+<html>
+<body>
+    <row><h2>Incluir Novo Evento</h2></row>
+    <row>
+        <form id="formulario">
+            <div class="row mb-3">
+                <div class="form-group">
+                    <label for="usuario">Usuário</label>
+                    <select id="usuario" name="usuario"></select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="form-group">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" class="form-control" placeholder="Insira o nome">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <input type="text" id="descricao" name="descricao" class="form-control" placeholder="Insira a descrição">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="form-group">
+                    <label for="date">Data:</label>
+                    <input type="datetime-local" id="dateTimePicker" name="dataLocal" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="form-group">
+                    <label>Tipo:</label>
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" id="exclusivo" name="tipo" value="exclusivo" checked>
+                        <label class="form-check-label" for="exclusivo">Exclusivo</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="radio" class="form-check-input" id="compartilhado" name="tipo" value="compartilhado">
+                        <label class="form-check-label" for="compartilhado">Compartilhado</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3" id="grupo-usuarios">
+                <label for="usuarios-compartilhados">Selecione um ou mais participantes:</label>
+                <select id="usuarios-compartilhados" name="usuarios-compartilhados" multiple>
+                </select>
+            </div>
+
+            <input type="submit" class="btn btn-primary" name="Cadastrar" />
+        </form>
+    </row>
+</body>
+</html>

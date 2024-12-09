@@ -1,0 +1,59 @@
+﻿@page
+@{
+    Layout = "_Layout";
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            buscarTodosEventos();
+        });
+
+        function buscarTodosEventos(){
+            $.ajax({
+                url: '/Evento/ListarEventos',
+                method: 'GET',
+                success: function(data) {
+                let container = $('#grid-container');
+                data.forEach(evento => {
+                    var data = new Date(evento.dataLocal);
+
+                    let yyyy = data.getFullYear();
+
+                    let mm = data.getMonth() + 1;
+
+                    let dd = data.getDate();
+
+                    var dataFormatada = dd + '/' + mm + '/' + yyyy;
+
+                    let col = `
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Nome: ${evento.nome}</h5>
+                            <p class="card-text">Descrição: ${evento.descricao}</p>
+                            <p class="card-text">Data: ${dataFormatada}</p>
+                        </div>
+                        </div>
+                    </div>
+                    `;
+                    container.append(col);
+                });
+                },
+                error: function() {
+                    alert('Erro ao carregar os dados.');
+                }
+            });
+        }
+    </script>
+}
+
+<html>
+    <body>
+        <row><h2>Eventos</h2></row>
+        <div class="container my-5">
+            <div class="row" id="grid-container">
+            </div>
+        </div>
+    </body>
+</html>
