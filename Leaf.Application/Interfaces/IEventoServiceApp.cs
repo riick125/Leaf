@@ -10,7 +10,5 @@ namespace Leaf.Application.Interfaces
         Task<ResultDto> ListarEventos();
 
         Task<ResultDto> IncluirEvento(EventoDto dto);
-
-        Task<ResultDto> EditarEvento(EventoDto dto);
     }
 }

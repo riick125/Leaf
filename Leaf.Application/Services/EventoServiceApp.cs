@@ -62,29 +62,6 @@ namespace Leaf.Application.Services
             }
         }
 
-        public async Task<ResultDto> EditarEvento(EventoDto dto)
-        {
-            try
-            {
-                var validarEvento = await ValidarEvento(dto);
-
-                if (!validarEvento.Sucesso)
-                {
-                    return validarEvento;
-                }
-
-                var evento = _mapper.Map<EventoDto, Evento>(dto);
-
-                var result = await _repository.IncluirEvento(evento, dto.UsuariosId);
-
-                return new ResultDto(string.Empty, result);
-            }
-            catch (Exception ex)
-            {
-                return new ResultDto("Erro ao realizar operação!");
-            }
-        }
-
         private async Task<ResultDto> ValidarEvento(EventoDto dto)
         {
             if (dto.Tipo == (int)TipoEventoEnum.Compartilhado)
